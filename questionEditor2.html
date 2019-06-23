@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			.dot-for-resize {
+				width : 16px;
+				height : 16px;
+				margin : -12px;
+				border-radius : 12px;
+				position : absolute;
+				display : block;
+				overflow : visible;
+				border : 4px solid black;
+				background-color : white;
+				z-index : 3;
+			}
+			.dot-for-resize:hover {
+				width : 32px;
+				height : 32px;
+				margin : -20px;
+			}
+			.dot-for-resize.top {
+				top : 0px;
+			}
+			.dot-for-resize.right {
+				right : 0px;
+			}
+			.dot-for-resize.bottom {
+				bottom : 0px;
+			}
+			.dot-for-resize.left {
+				left : 0px;
+			}
+			.dot-for-resize.middleX {
+				left : 50%;
+			}
+			.dot-for-resize.middleY {
+				top : 50%;
+			}
+			
+			.dot-for-resize-collect {
+				visibility : hidden;
+			}
+			
+			div#editor-window {
+				border : 5px solid black;
+				padding : 20px;
+				width : 90%;
+				height : 900px;
+				overflow : scroll;
+			}
+			img#testImg {
+				position : absolute;
+				left : 0px;
+				top : 0px;
+			}
+			span#frameOftestImg {
+				position : relative;
+				display : inline-block;
+			}
+		</style>
+		<script>
+			window.onload=()=>{
+				var editor_window=document.getElementById("editor-window");
+				var testImg=document.getElementById("testImg");
+				var submit_image=document.getElementById("submit-image");
+				var submit_image_button=document.getElementById("submit-image-button");
+				
+				document.workingObject=false;
+				function handleMouseEnter(event){
+					this.getElementsByClassName("dot-for-resize-collect")[0].style.visibility="visible";
+				}
+				function handleMouseLeave(event){
+					this.getElementsByClassName("dot-for-resize-collect")[0].style.visibility="hidden";
+				}
+				function handleMouseDown_dot(event){
+					event.preventDefault();
+					document.workingObject=this;
+					console.log(this);
+				}
+				function preventEventDefault(event){
+					event.preventDefault();
+				}
+				function initialImage(img){
+					var frame=document.getElementById(`frameOf${img.id}`);
+					frame["originalWidth"]=img.width;
+					frame["originalHeight"]=img.height;
+					frame.style.width=`${img.width}px`;
+					frame.style.height=`${img.height}px`;
+					img.style.width=frame.style.width;
+					img.style.height=frame.style.height;
+					img.parentElement.onmouseleave=handleMouseLeave;
+					img.parentElement.onmouseenter=handleMouseEnter;
+					img.onmousedown=preventEventDefault;
+					var dots=img.parentElement.getElementsByClassName("dot-for-resize");
+					for(let i=0;i<dots.length;i++){
+						dots[i].onmousedown=handleMouseDown_dot;
+					}
+				}
+				initialImage(testImg);
+				
+				function handleMouseMove_doc(event){
+					var wkObj=document.workingObject;
+					if(wkObj){
+						console.log("handleMouseMove_doc");
+						var frame=wkObj.parentElement.parentElement;
+						var img=frame.getElementsByTagName("img")[0];
+						var width=Number(img.style.width.split("px")[0]);
+						var height=Number(img.style.height.split("px")[0]);
+						var mX=event.movementX;
+						var mY=event.movementY;
+						if(event.shiftKey){
+							
+						} else {
+							if(wkObj.classList.contains("top")){
+								img.style.height=`${height-mY}px`;
+								frame.style.height=img.style.height;
+							}
+							if(wkObj.classList.contains("right")){
+								img.style.width=`${width+mX}px`;
+								frame.style.width=img.style.width;
+							}
+							if(wkObj.classList.contains("bottom")){
+								img.style.height=`${height+mY}px`;
+								frame.style.height=img.style.height;
+							}
+							if(wkObj.classList.contains("left")){
+								img.style.width=`${width-mX}px`;
+								frame.style.width=img.style.width;
+							}
+						}
+					}
+				}
+				
+				function cancelWorkingObject(){
+					document.workingObject.proportion=false;
+					document.workingObject=false;
+				}
+				
+				/*
+				function submitImage(){
+					var xhttp=new XMLHttpRequest();
+					xhttp.onreadystatechange=function (){
+						if(this.readyState==4){
+							console.log(this.response);
+						}
+					}
+					xhttp.open("POST","/upload/image");
+					xhttp.setRequestHeader("Content-Type","multipart/form-data");
+					xhttp.send(submit_image);
+				}
+				*/
+				
+				var submit_image_input=document.getElementById("submit-image-input");
+				function submitImage(){
+					if(this.files[0]){
+						var form=new FormData();
+						form.append(this.name,this.files[0]);
+						var xhttp=new XMLHttpRequest();
+						xhttp.onload=function(event){console.log(event);}
+						xhttp.open("POST","/upload/image");
+						xhttp.send(form);
+					}
+					console.log("Not what i want");
+				}
+				submit_image_input.oninput=submitImage;
+				
+				//submit_image_button.onclick=submitImage;
+				
+				document.onmousemove=handleMouseMove_doc;
+				document.onmouseup=cancelWorkingObject;
+				document.onfocusout=cancelWorkingObject;
+				
+				//editor_window.ondrop=(event)=>console.log(event);
+				editor_window.onpaste=function(event){
+					var parser=new DOMParser();
+					var items=event.clipboardData.items;
+					var preventDefaultFlag=false;
+					for(let i=0;i<items.length;i++){
+						console.log(items[i]);
+						if(items[i].type.match("^text/html")){
+							event.preventDefault();
+							items[i].getAsString((data)=>{
+								var doc=parser.parseFromString(data,"text/html");
+								console.log(doc);
+								var nodeIt=doc.createNodeIterator(
+									doc.body,
+									NodeFilter.SHOW_ELEMENT,
+									function(node){
+										if(node.children.length==0&&
+											(node.tagName.match("^IMG")||node.tagName.match("^SPAN"))){
+											return NodeFilter.FILTER_ACCEPT;
+										}else{
+											return NodeFilter.FILTER_REJECT;
+										}
+									}
+								);
+								var currentNode;
+								while(currentNode=nodeIt.nextNode()){
+									console.log(currentNode);
+								}
+							});
+						} else {
+							items[i].getAsString(console.log);
+						}
+					}
+					var files=event.clipboardData.files;
+					for(let i=0;i<files.length;i++){
+						console.log(files[i]);
+					}
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<br><br><br><br>
+		<form id="submit-image" method="POST" action="/upload/image" enctype="multipart/form-data">
+			<input id="submit-image-input" type="file" name="imageToUpload">
+		</form>
+		<div id="editor-window" contenteditable="true">
+			<span id="frameOftestImg" contenteditable="false">
+				<div class="dot-for-resize-collect">
+					<div class="dot-for-resize left top"></div>
+					<div class="dot-for-resize right top"></div>
+					<div class="dot-for-resize left bottom"></div>
+					<div class="dot-for-resize right bottom"></div>
+					<div class="dot-for-resize left middleY"></div>
+					<div class="dot-for-resize right middleY"></div>
+					<div class="dot-for-resize middleX top"></div>
+					<div class="dot-for-resize middleX bottom"></div>
+				</div>
+				<img src="./images/a.jpg" id="testImg">
+			</span>
+		</div>
+	</body>
+</html>

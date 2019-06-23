@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			div#editor-window {
+			}
+			
+			.dot-for-resize {
+				width : 16px;
+				height : 16px;
+				margin : -12px;
+				border-radius : 12px;
+				position : absolute;
+				display : block;
+				overflow : visible;
+				border : 4px solid black;
+				background-color : white;
+				z-index : 3;
+			}
+			.dot-for-resize:hover {
+				width : 32px;
+				height : 32px;
+				margin : -20px;
+			}
+			.dot-for-resize.top {
+				top : 0px;
+			}
+			.dot-for-resize.right {
+				right : 0px;
+			}
+			.dot-for-resize.bottom {
+				bottom : 0px;
+			}
+			.dot-for-resize.left {
+				left : 0px;
+			}
+			.dot-for-resize.middleX {
+				left : 50%;
+			}
+			.dot-for-resize.middleY {
+				top : 50%;
+			}
+			
+			img.img-for-edit {
+				position : absolute;
+				width : inherit;
+				height : inherit;
+				left : 0px;
+				top : 0px;
+			}
+			span.image-frame {
+				position : relative;
+				display : inline-block;
+			}
+		</style>
+		<script>
+			document.workingObject=false;
+			var input_image;
+			var editor_window;
+			var last_range;
+			
+			
+			function checkGrandParent(child,parent){
+				if(child==document.body){return false;}
+				if(child==parent){return true;}
+				return checkGrandParent(child.parentElement,parent);
+			}
+			function inputImage(event){
+			}
+			function clearInputImage(event){
+				this.value="";
+			}
+			function saveLastRange(event){
+				console.log(event);
+				last_range=document.getSelection().getRangeAt(0);
+			}
+			function updateRange(){
+				var sel=document.getSelection();
+				var anchorNode=sel.anchorNode;
+				if(checkGrandParent(anchorNode,editor_window)){
+					last_range=sel.getRangeAt(0);
+				}
+			}
+			function constructDotCollector(){
+				var dotCollector=document.createElement("div");
+				dotCollector.setAttribute("class","dot-for-resize-collector");
+				var possibleClasses=[
+					"left top","middleX top","right top","right middleY",
+					"right bottom","middleX bottom","left bottom","left middleY"
+				];
+				var dot;
+				possibleClasses.forEach((pos)=>{
+					dot=document.createElement("div");
+					dot.setAttribute("class","dot-for-resize "+pos);
+					dotCollector.appendChild(dot);
+				});
+				return dotCollector;
+			}
+			function constructImageFrame(src,width,height){
+				var frame=document.createElement("span");
+				frame.setAttribute("class","image-frame new-added");
+				frame.setAttribute("contenteditable","false");
+				var dots=constructDotCollector();
+				frame.appendChild(dots);
+				var img;
+				if(src.tagName){
+					//src is image element
+					img=src.cloneNode();
+					console.log(img);
+				} else {
+					//src is uri
+					img=document.createElement("img");
+					img.setAttribute("src",src);
+					var style="";
+					if(width){style+=` width:${width}`;}
+					if(height){style+=` height:${height}`;}
+					if(style){image.setAttribute("style",style);}
+				}
+				img.setAttribute("class","img-for-edit");
+				frame.appendChild(img);
+				return frame;
+			}
+			function initializeImageFrameSize(frame){
+				var img=frame.getElementsByTagName("img")[0];
+				img.addEventListener("load",function(event){
+					var width=this.width;
+					var height=this.height;
+					img.style.width=frame.style.width=`${width}px`;
+					img.style.height=frame.style.height=`${height}px`;
+				});
+			}
+			function dotMouseDown(event){
+				var frame=this.parentElement.parentElement;
+				document.workingObject=this;
+			}
+			function initializeImageFrame(frame){
+				initializeImageFrameSize(frame);
+				var dots=frame.getElementsByClassName("dot-for-resize-collector")[0];
+				dots.style.visibility="hidden";
+				for(let i=0;i<dots.children.length;i++){
+					dots.children[i].addEventListener("mousedown",dotMouseDown);
+				}
+				frame.addEventListener("mouseenter",function(event){
+					var dots=this.getElementsByClassName("dot-for-resize-collector")[0];
+					dots.style.visibility="visible";
+				});
+				frame.addEventListener("mouseleave",function(event){
+					var dots=this.getElementsByClassName("dot-for-resize-collector")[0];
+					dots.style.visibility="hidden";
+				});
+			}
+			function insertImage(src,width,height){
+				updateRange();
+				last_range.deleteContents();
+				var frame=constructImageFrame(src,width,height);
+				console.log("frame：");
+				//console.log(frame);
+				initializeImageFrame(frame);
+				last_range.insertNode(frame);
+				last_range.collapse(false);	
+				//document.execCommand("insertHTML",false,frame.outerHTML);
+				console.log(frame.outerHTML);
+			}
+			function insertText(txt){
+				updateRange();
+				last_range.deleteContents();
+				last_range.insertNode(document.createTextNode(txt));
+				last_range.collapse(false);
+			}
+			
+			function documentMouseMove(event){
+				var wkObj=document.workingObject;
+				if(wkObj){
+					if(wkObj.classList.contains("dot-for-resize")){
+						event.preventDefault();
+						var img=wkObj.parentElement.nextElementSibling;
+						var frame=wkObj.parentElement.parentElement;
+						var moveX=event.movementX;
+						var moveY=event.movementY;
+						var width=Number(frame.style.width.split("px")[0]);
+						var height=Number(frame.style.height.split("px")[0]);
+						var wkObjCls=wkObj.classList;
+						//console.log({width,height});
+						console.log({moveX,moveY});
+						if(wkObjCls.contains("left")){
+							img.style.width=frame.style.width=`${width-moveX}px`;
+						} else if(wkObjCls.contains("right")){
+							img.style.width=frame.style.width=`${width+moveX}px`;
+						}
+						if(wkObjCls.contains("top")){
+							img.style.height=frame.style.height=`${height-moveY}px`;
+						} else if(wkObjCls.contains("bottom")){
+							img.style.height=frame.style.height=`${height+moveY}px`;
+						}
+					}
+				}
+			}
+			function cancelWorkingObject(event){
+				document.workingObject=false;
+			}
+			function handlePastedHtml(data){
+				var parser=new DOMParser();
+				var doc=parser.parseFromString(data,"text/html");
+				var domIt=doc.createNodeIterator(
+					doc.body,
+					NodeFilter.SHOW_ELEMENT,
+					function(node){
+						if((node.children.length==0)&&node.tagName.match(/^(SPAN|IMG|DIV|BR)/)){
+							return NodeFilter.FILTER_ACCEPT;
+						} else {
+							return NodeFilter.FILTER_REJECT;
+						}
+					}
+				);
+				var currentNode;
+				while(currentNode=domIt.nextNode()){
+					switch(currentNode.tagName){
+						case "SPAN":
+							insertText(currentNode.innerText);break;
+						case "IMG":
+							insertImage(currentNode);
+							break;
+						case "DIV":
+							insertText(currentNode.innerText);break;
+						case "BR":
+							insertText("\n");break;
+						default:
+							break;
+					}
+				}
+			}
+			function handlePaste(event){
+				var items=event.clipboardData.items;
+				var files=event.clipboardData.files;
+				
+				for(let i=0;i<items.length;i++){
+					console.log(items[i]);
+					if(items[i].type.match("^text/html")){
+						event.preventDefault();
+						items[i].getAsString(handlePastedHtml);
+					}
+				}
+			}
+			
+			document.addEventListener("mousemove",documentMouseMove);
+			document.addEventListener("mouseup",cancelWorkingObject);
+			document.addEventListener("focusout",cancelWorkingObject);
+			
+			
+			window.onload=function(){
+				input_image=document.getElementById("input-image");
+				input_image.addEventListener("input",inputImage);
+				input_image.addEventListener("focus",inputImage);
+				
+				editor_window=document.getElementById("editor-window");
+				editor_window.addEventListener("focusout",saveLastRange);
+				editor_window.addEventListener("paste",handlePaste);
+				
+				last_range=document.createRange();
+				last_range.setStart(editor_window,0);
+				last_range.setEnd(editor_window,0);
+				
+				
+			}
+		</script>
+	</head>
+	<body>
+		<input id="input-image" type="file" accept="image/*" multiple>
+		<div id="editor-window" contenteditable="true">
+		</div>
+	</body>
+</html>

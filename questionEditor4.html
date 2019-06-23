@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			div#editor-window {
+			}
+			
+			.dot-for-resize {
+				width : 16px;
+				height : 16px;
+				margin : -12px;
+				border-radius : 12px;
+				position : absolute;
+				display : block;
+				overflow : visible;
+				border : 4px solid black;
+				background-color : white;
+				z-index : 3;
+			}
+			.dot-for-resize:hover {
+				width : 32px;
+				height : 32px;
+				margin : -20px;
+			}
+			.dot-for-resize.top {
+				top : 0px;
+			}
+			.dot-for-resize.right {
+				right : 0px;
+			}
+			.dot-for-resize.bottom {
+				bottom : 0px;
+			}
+			.dot-for-resize.left {
+				left : 0px;
+			}
+			.dot-for-resize.middleX {
+				left : 50%;
+			}
+			.dot-for-resize.middleY {
+				top : 50%;
+			}
+			
+			img.img-for-edit {
+				position : absolute;
+				width : inherit;
+				height : inherit;
+				left : 0px;
+				top : 0px;
+			}
+			span.image-frame {
+				position : relative;
+				display : inline-block;
+			}
+		</style>
+		<script>
+			document.workingObject=false;
+			var input_image;
+			var editor_window;
+			
+			
+		</script>
+	</head>
+	<body>
+		<input id="input-image" type="file" accept="image/*" multiple>
+		<div id="editor-window" contenteditable="true">
+		</div>
+	</body>
+</html>

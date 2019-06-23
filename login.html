@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<script src="./javascripts/hashString.js"></script>
+		<style>
+			#login-window {
+				border : 1px solid #ccc;
+				padding : 4px 12px 24px 12px;
+				width : 360px;
+			}
+		
+			.icon-32px {
+				width : 32px;
+				height : 32px;
+				float : left;
+			}
+			.input-bar {
+				padding-bottom : 17px;
+			}
+			input {
+				padding : 8px 12px;
+				width : 75%;
+				background-color : rgb(255,255,255);
+				border : 1px solid #ccc;
+			}
+			.username.icon-32px {
+				background : url("./images/icons.png") 6px -73px no-repeat;
+				border : 1px solid #ccc;
+				margin-right : -1px;
+			}
+			.password.icon-32px {
+				background : url("./images/icons.png") -18px -73px no-repeat;
+				border : 1px solid #ccc;
+				margin-right : -1px;
+			}
+			#login-button {
+				width : 100%;
+				height : 30px;
+			}
+			#login-error-info {
+				color : red;
+				height : 20px;
+				font-size : 15px;
+			}
+		</style>
+		<script>
+			window.onload=()=>{
+				var login_button=document.getElementById("login-button");
+				var login_password=document.getElementById("login-password");
+				var login_username=document.getElementById("login-username");
+				var login_error_info=document.getElementById("login-error-info");
+				var login_form=document.getElementById("login-form");
+				function loginCheck(){
+					if(this.readyState==4&&this.status==200){
+						switch(this.response){
+							case "OK":
+								break;
+							case "WrongPasswowrd":
+								login_error_info.innerText="密码错误";
+								break;
+							case "NoSuchAccount":
+								login_error_info.innerText="此账号不存在";
+								break;
+							default:
+								login_error_info.innerText="未知错误";
+								break;
+						}
+					}
+				}
+				function loginAfterSalt(){
+					if(this.readyState==4&&this.status==200){
+						var {salt}=JSON.parse(this.response);
+						var pswd=hashString(login_password.value);
+						var username=login_username.value;
+						pswd=addSaltAndHash(pswd,salt);
+						console.log(pswd);
+						login_password.value=pswd;
+						login_form.submit();
+						/*
+						var xhrForLogin=new XMLHttpRequest();
+						xhrForLogin.onreadystatechange=loginCheck;
+						xhrForLogin.open("POST",`/api/login?password=${pswd}&username=${username}`);
+						xhrForLogin.send();
+						*/
+						
+					}
+				}
+				login_button.addEventListener("click",()=>{
+					var xhrForSalt=new XMLHttpRequest();
+					xhrForSalt.onreadystatechange=loginAfterSalt;
+					xhrForSalt.open("POST","/api/salt");
+					xhrForSalt.send();
+				});
+			}
+		</script>
+	</head>
+	<body>
+		<div id="login-window">
+			<div id="login-window-title">
+			</div>
+			<div id="login-error-info">
+			</div>
+			<div id="login-window-content">
+				<form id="login-form" method="POST" action="/api/login">
+					<div id="login-username-window" class="input-bar">
+						<span class="username icon-32px"></span>
+						<input id="login-username" type="text" name="username" placeholder="用户名">
+					</div>
+					<div id="login-window-password" class="input-bar">
+						<span class="password icon-32px"></span>
+						<input id="login-password" type="password" name="password" placeholder="密码">
+					</div>
+				</form>
+				<button id="login-button">
+					登&nbsp;&nbsp;&nbsp;&nbsp;录
+				</button>
+			</div>
+			<div id="login-window-foot">
+			</div>
+		</div>
+	</body>
+</html>

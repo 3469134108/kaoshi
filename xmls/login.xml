@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+	<head>
+		<style>
+			
+		</style>
+	</head>
+	<body>
+		<div id="login-window">
+			<div id="login-window-title">
+			</div>
+			<div id="login-window-content">
+				<div id="login-username-window">
+					<span class="username icon"></span>
+					<input id="login-username" type="text">
+				</div>
+				<div id="login-window-password">
+					<span class="password icon"></span>
+					<input id="login-password" type="password">
+				</div>
+			</div>
+			<div id="login-window-foot">
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			div#editor-window {
+				border : 1px solid #ccc;
+			}
+			div#editor-menu-window {
+				border : 1px solid #ccc;
+			}
+			img#testImg {
+				padding : 15px;
+				border : 0;
+				margin : -15px;
+			}
+			img#testImg:hover {
+				border : 15px solid #00BBFF;
+				padding : 0;
+			}
+		</style>
+		<script>
+			window.onload=()=>{
+				function handleMouseMove(event){
+					var oX=event.offsetX;
+					var oY=event.offsetY;
+					//console.log(`mX=${mX}; mY=${mY}`);
+					this.style.borderTopColor="#00BBFF";
+					this.style.borderRightColor="#00BBFF";
+					this.style.borderBottomColor="#00BBFF";
+					this.style.borderLeftColor="#00BBFF";
+					if(oX<=0){
+						this.style.borderLeftColor="#0000FF";
+					} else if(this.width-oX<=0){
+						this.style.borderRightColor="#0000ff";
+					}
+					if(oY<=0){
+						this.style.borderTopColor="#0000FF";
+					} else if(this.height-oY<=0){
+						this.style.borderBottomColor="#0000FF";
+					}
+				}
+				
+				function handleMouseMove_doc(event){
+					var mX=event.movementX;
+					var mY=event.movementY;
+					switch(this.resizingObject.resizing){
+						case "top":
+							this.resizingObject.height-=mY;
+							break;
+						case "right":
+							this.resizingObject.width+=mX;
+							break;
+						case "bottom":
+							this.resizingObject.height+=mY;
+							break;
+						case "left":
+							this.resizingObject.width-=mX;
+							break;
+						default:
+							break;
+					}
+				}
+				
+				function handleMouseDown(event){
+					event.preventDefault();
+					var oX=event.offsetX;
+					var oY=event.offsetY;
+					if(oX<=0){
+						document.resizingObject=this;
+						this.resizing="left";
+					} else if(this.width-oX<=0){
+						document.resizingObject=this;
+						this.resizing="right";
+					}
+					if(oY<=0){
+						document.resizingObject=this;
+						this.resizing="top";
+					} else if(this.height-oY<=0){
+						document.resizingObject=this;
+						this.resizing="bottom";
+					}
+				}
+				
+				function handleMouseUp(event){
+					this.resizingObject.resizing=false;
+					document.resizingObject=false;
+				}
+				
+				function handleMouseOut(event){
+					this.resizing=false;
+				}
+			
+				var testImg=document.getElementById("testImg");
+				document.resizingObject=false;
+				testImg.resizing=false;
+				testImg.onmousemove=handleMouseMove;
+				testImg.onmousedown=handleMouseDown;
+				document.onmouseup=handleMouseUp;
+				document.onmousemove=handleMouseMove_doc;
+				//testImg.onmouseout=handleMouseOut;
+			}
+		</script>
+	</head>
+	<body>
+		<div id="editor-menu-window">
+			<input type="file">
+		</div>
+		<div id="editor-window" contenteditable="true">
+			<img src="./images/a.jpg" id="testImg">
+		</div>
+	</body>
+</html>
